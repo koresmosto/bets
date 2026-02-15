@@ -1,0 +1,34 @@
+server:
+  port: 8080
+
+spring:
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/betting_db
+    username: betting_user
+    password: betting_pass
+  sql:
+    init:
+      mode: always
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: betting-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: bet-settlement-producer-group
+    send-message-timeout: 10000
+
+logging:
+  level:
+    com.phantom.betting: DEBUG
+    org.springframework.kafka: INFO
+    org.apache.rocketmq: INFO

@@ -1,0 +1,13 @@
+###
+#  Created under not commercial project "Renovation"
+#
+#  Copyright 2021-2024
+###
+
+FROM eclipse-temurin:21-jdk
+
+VOLUME /tmp
+
+COPY target/betting-0.0.1-SNAPSHOT.jar /app.jar
+
+CMD ["java", "-jar", "/app.jar"]

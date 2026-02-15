@@ -1,0 +1,104 @@
+#version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: betting-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: betting_db
+      POSTGRES_USER: betting_user
+      POSTGRES_PASSWORD: betting_pass
+#    volumes:
+#      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - betting-net
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: betting-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - betting-net
+    # intro healtheck
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: betting-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - betting-net
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      LOGGING_LEVEL_ROOT: WARN
+    networks:
+      - betting-net
+
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.1
+    container_name: betting-rocketmq-namesrv
+    ports:
+      - "9876:9876"
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m"
+    command: sh mqnamesrv
+    networks:
+      - betting-net
+
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.1
+    container_name: betting-rocketmq-broker
+    depends_on:
+      - rocketmq-namesrv
+#      rocketmq-namesrv:
+#        condition: service_healthy
+    ports:
+      - "10911:10911"
+      - "10909:10909"
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx512m"
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+    command: sh mqbroker -n rocketmq-namesrv:9876 --enable-proxy
+    networks:
+      - betting-net
+
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:2.1.0
+    container_name: rocketmq-dashboard
+    ports:
+      - "8091:8082"
+    environment:
+      #- JAVA_OPTS=-Drocketmq.namesrv.addr=rocketmq-namesrv:9876
+      NAMESRV_ADDR: rocketmq-namesrv:9876
+    depends_on:
+      - rocketmq-namesrv
+    networks:
+      - betting-net
+
+networks:
+  betting-net:
+    driver: bridge
