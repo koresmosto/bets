@@ -6,16 +6,16 @@ A reactive Spring Boot 3.5 application that simulates sports betting event outco
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌────────────────┐     ┌──────────────┐
-│  REST API    │────▶│    Kafka      │────▶│  Kafka         │────▶│ PostgreSQL   │
+│  REST API    │────▶│    Kafa      │────▶│  Kafka         │────▶│ PostgreSQL   │
 │  POST        │     │  (event-     │     │  Consumer      │     │ (bets table) │
 │  /api/event- │     │   outcomes)  │     │                │     │              │
 │   outcomes   │     └──────────────┘     └───────┬────────┘     └──────────────┘
 └──────────────┘                                  │
                                                   ▼
                                           ┌───────────────┐     ┌──────────────┐
-                                          │ Bet Settlement │────▶│  RocketMQ    │
-                                          │ Service        │     │  (bet-       │
-                                          │                │     │  settlements)│
+                                          │ Bet Settlement│────▶│  RocketMQ    │
+                                          │ Service       │     │  (bet-       │
+                                          │               │     │  settlements)│
                                           └───────────────┘     └──────────────┘
 ```
 
